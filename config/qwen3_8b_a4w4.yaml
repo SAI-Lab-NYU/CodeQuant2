@@ -1,0 +1,42 @@
+path:
+  rotation: /path/to/outputs/rotation_qwen3_8b
+  clustering: /path/to/outputs/clustering_qwen3_8b
+model_name: Qwen/Qwen3-8B
+device: cuda
+tie: false
+rotation:
+  max_sample: 512
+  batch_size: 16
+  max_length: 512
+  epochs: 8
+  fine_tune_lr: 0.001
+  wiki_dataset: Self-GRIT/wikitext-2-raw-v1-preprocessed
+  wiki_ratio: 0.9
+evaluation:
+  # Full-precision RAC trace generation, consumed by script/gen_vllm.py.
+  generation:
+    max_tokens: 256
+adap_clus_para:
+  max_length: 512
+bits:
+  activation: 4
+  cluster_num: 16
+  assignment_cluster_number: true
+training_para:
+  max_length: 512
+  wiki_dataset: Self-GRIT/wikitext-2-raw-v1-preprocessed
+  wiki_ratio: 0.9
+  start_temp: 0.1
+  end_temp: 0.001
+  hard_ratio: 0.98
+  use_assignment_lora: true
+  a_lora_r: 8
+  target_layers:
+  - q_proj
+  - k_proj
+  - v_proj
+  - gate_proj
+  - up_proj
+  soft: true
+  lr_c: 0.0001
+  loss1_weight: 1.0

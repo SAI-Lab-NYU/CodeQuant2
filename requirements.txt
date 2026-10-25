@@ -1,0 +1,13 @@
+torch==2.10.0
+transformers==4.57.1
+datasets==4.8.4
+accelerate==1.10.0
+safetensors==0.7.0
+huggingface_hub==0.36.2
+numpy==2.2.6
+PyYAML==6.0.3
+tqdm==4.67.3
+openai==2.31.0
+vllm==0.19.0
+evalscope==1.5.2.post1
+wandb==0.25.1

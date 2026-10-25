@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.idea/
+.DS_Store
+
+# experiment outputs
+data/
+log/
+wandb/
+*.pt
+*.jsonl
+*.log
+*.out
+step_loss.txt
