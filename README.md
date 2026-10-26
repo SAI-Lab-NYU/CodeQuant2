@@ -23,6 +23,9 @@ performance under low-precision weight and activation quantization.
   assignments with local reconstruction losses.
 - **A4W4 release configs:** examples for Qwen3-4B-Thinking, Qwen3-8B, and
   Phi-4-Reasoning, with vLLM and EvalScope downstream evaluation.
+- **CUDA decoding kernel:** packed A4 activations and 4-bit weight indices
+  with per-output-channel codebooks, shared-memory product lookup tables,
+  and split-K reduction.
 
 ## 🔧 Requirements
 
@@ -171,6 +174,55 @@ trace generation**. Downstream evaluation tasks and decoding settings are
 defined in [`script/eval_thinking_vllm.py`](script/eval_thinking_vllm.py) and
 [`script/eval_thinking_vllm_phi.py`](script/eval_thinking_vllm_phi.py).
 Use decimal notation for YAML learning rates, for example `0.001`.
+
+## ⚡ CUDA Decoding Kernel
+
+[`kernel/lut_kernel.py`](kernel/lut_kernel.py) provides a standalone CUDA
+kernel for decoding. Each output channel has a 16-entry FP16 codebook.
+The kernel builds shared-memory tables of products of centroids and activation indices,
+replaces multiplications in the K loop with lookups, and combines split-K
+partial sums into FP16 outputs.
+
+The supported input shape is `[M, K]` with **1–16 decoding rows** and `K`
+divisible by eight. Activations and weight indices are packed eight 4-bit
+values per int32, with the first value in the lowest four bits. This entrypoint
+uses **16 centroids per output channel**; ACA allocations of 8 or 32 centroids
+require a separate representation or kernel.
+
+All buffers must be contiguous CUDA tensors on the current device:
+
+| Tensor | Shape | Dtype |
+|---|---|---|
+| `packed_activations` | `[M, K/8]` | `int32` |
+| `packed_weights` | `[K/8, N]` | `int32` |
+| `centroids` | `[N, 16]` | `float16` |
+| `min_max` | `[M, 2]`, per-row minimum and maximum | `float32` |
+| `weight_sums` | `[N]` | `float32` |
+| `partials` | `[split_k, M, N]` | `float32` |
+| `output` | `[M, N]` | `float16` |
+
+Given prepacked inputs and reusable workspace/output buffers:
+
+```python
+from kernel.lut_kernel import row_lut, precompute_csum
+
+# Compute once when loading the packed weights and codebooks.
+weight_sums = precompute_csum(packed_weights, centroids, K)
+
+# Run once per decoding step. split_k > 0; threads_per_column is 4, 8, or 16.
+row_lut(
+    packed_activations, packed_weights, centroids, min_max,
+    weight_sums, partials, output,
+    M, N, K // 8, split_k, threads_per_column,
+)
+```
+
+Activation quantization and packing are performed by the caller. Importing
+the module compiles the extension for the current GPU using PyTorch's JIT
+extension loader; a CUDA-enabled PyTorch environment, CUDA toolkit with
+`nvcc`, a compatible C++ compiler, and Ninja are required. The kernel is a
+direct-call entrypoint for decoding integration; the evaluation commands above
+use the vLLM activation fake-quantization plugin.
 
 ## 📚 Citation
 

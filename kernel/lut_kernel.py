@@ -12,7 +12,7 @@ constexpr int COLS = 32;
 
 template<int TPC, int MAX_M>
 __global__ void __launch_bounds__(COLS * TPC)
-prlut_kernel(
+row_lut_kernel(
     const int* __restrict__ activations,
     const int* __restrict__ weights,
     const half* __restrict__ centroids,
@@ -155,7 +155,7 @@ prlut_kernel(
     }
 }
 
-__global__ void prlut_reduce(
+__global__ void row_lut_reduce(
     const float* __restrict__ partials,
     const float* __restrict__ min_max,
     const float* __restrict__ weight_sums,
@@ -177,7 +177,7 @@ __global__ void prlut_reduce(
     output[(long long)m * N + n] = __float2half(sum);
 }
 
-void prlut(
+void row_lut(
     torch::Tensor activations,
     torch::Tensor weights,
     torch::Tensor centroids,
@@ -200,7 +200,7 @@ void prlut(
     const int max_m = M <= 1 ? 1 : M <= 2 ? 2 : M <= 4 ? 4 : M <= 8 ? 8 : 16;
 
     #define LAUNCH(T, ROWS) \
-        prlut_kernel<T, ROWS><<<grid, COLS * T, 0, stream>>>( \
+        row_lut_kernel<T, ROWS><<<grid, COLS * T, 0, stream>>>( \
             (const int*)activations.data_ptr(), (const int*)weights.data_ptr(), \
             (const half*)centroids.data_ptr(), (const float*)min_max.data_ptr(), \
             (float*)partials.data_ptr(), M, N, packed_k)
@@ -223,7 +223,7 @@ void prlut(
     #undef LAUNCH
     #undef DISPATCH_ROWS
 
-    prlut_reduce<<<dim3((N + 255) / 256, M), 256, 0, stream>>>(
+    row_lut_reduce<<<dim3((N + 255) / 256, M), 256, 0, stream>>>(
         (const float*)partials.data_ptr(), (const float*)min_max.data_ptr(),
         (const float*)weight_sums.data_ptr(), (half*)output.data_ptr(), split_k, M, N
     );
@@ -231,7 +231,7 @@ void prlut(
 """
 
 _CPP_DECLARATIONS = """
-void prlut(
+void row_lut(
     torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor,
     torch::Tensor, torch::Tensor, torch::Tensor,
     int, int, int, int, int
@@ -239,11 +239,11 @@ void prlut(
 """
 
 _compute_capability = torch.cuda.get_device_capability()
-pr = load_inline(
+_lut_extension = load_inline(
     name="clusquant_lut",
     cpp_sources=_CPP_DECLARATIONS,
     cuda_sources=_CUDA_SOURCE,
-    functions=["prlut"],
+    functions=["row_lut"],
     with_cuda=True,
     extra_cuda_cflags=[
         "-O3",
@@ -251,6 +251,8 @@ pr = load_inline(
         f"-arch=sm_{_compute_capability[0]}{_compute_capability[1]}",
     ],
 )
+
+row_lut = _lut_extension.row_lut
 
 
 def unpack_idx(packed_weights: torch.Tensor,
