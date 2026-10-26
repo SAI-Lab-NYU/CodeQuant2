@@ -1,12 +1,12 @@
-# ClusQuant: Mitigating Outliers with Clustering-Based Representations for Low-Precision LRMs
+# CodeQuant2: Enhanced Outlier Mitigation and Adaptive Clustering for Low-Precision LRMs
 
 <p align="center" style="font-size: 24px;">
   Conference on Neural Information Processing Systems (NeurIPS), 2026
 </p>
 
-This repository provides the official implementation of **ClusQuant**, a
+This repository provides the official implementation of **CodeQuant2**, a
 clustering-based quantization framework for **large reasoning models (LRMs)**.
-ClusQuant combines reasoning-aware calibration, fine-tuned rotation and scaling,
+CodeQuant2 combines reasoning-aware calibration, fine-tuned rotation and scaling,
 adaptive cluster allocation, and learnable clustering to preserve reasoning
 performance under low-precision weight and activation quantization.
 
@@ -39,6 +39,7 @@ pip install -r requirements.txt
 The requirements pin PyTorch, Transformers, vLLM, EvalScope, and the supporting
 packages. Weights & Biases logging is optional and enabled with `--wandb` in
 the rotation and clustering fine-tuning scripts.
+Runs are logged to the `codequant2` project.
 
 ## 👨‍💻 Pipeline
 
@@ -143,6 +144,7 @@ Useful evaluation flags:
 - `--no-quantization`: disable the vLLM activation-quantization plugin.
 - `--server-only`: start the vLLM server without running evaluations.
 - `--cache-root`: select the root directory for HF, ModelScope, and vLLM caches.
+  The same root can be set with the `CODEQUANT2_CACHE_ROOT` environment variable.
 
 ### 🔎 Config
 

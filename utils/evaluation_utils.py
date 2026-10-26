@@ -175,7 +175,7 @@ class VllmEvalConfig:
 
 
 def default_cache_root() -> Path:
-    root = os.environ.get("CLUSQUANT_CACHE_ROOT") or os.environ.get("VLLM_CACHE_ROOT")
+    root = os.environ.get("CODEQUANT2_CACHE_ROOT") or os.environ.get("VLLM_CACHE_ROOT")
     if root:
         return Path(root)
 
@@ -199,7 +199,7 @@ def default_cache_env() -> Dict[str, str]:
 
 
 def set_cache_env() -> None:
-    override_from_root = bool(os.environ.get("CLUSQUANT_CACHE_ROOT"))
+    override_from_root = bool(os.environ.get("CODEQUANT2_CACHE_ROOT"))
     for key, value in default_cache_env().items():
         if override_from_root:
             os.environ[key] = value
@@ -471,7 +471,7 @@ def run_eval_cli(config: VllmEvalConfig) -> None:
         config = replace(config, act_quant_bits=activation_bits)
 
     if args.cache_root:
-        os.environ["CLUSQUANT_CACHE_ROOT"] = args.cache_root
+        os.environ["CODEQUANT2_CACHE_ROOT"] = args.cache_root
     set_cache_env()
 
     model_dir = args.model_dir or config.model_dir

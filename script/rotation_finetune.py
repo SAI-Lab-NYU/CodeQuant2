@@ -62,7 +62,7 @@ def main(experiment_config: dict, use_wandb: bool) -> None:
         import wandb
 
         wandb.init(
-            project="clusquant",
+            project="codequant2",
             name="rotation_fine_tune",
             config={**experiment_config, "stage": "rotation_fine_tune"},
         )

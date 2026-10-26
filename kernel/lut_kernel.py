@@ -240,7 +240,7 @@ void row_lut(
 
 _compute_capability = torch.cuda.get_device_capability()
 _lut_extension = load_inline(
-    name="clusquant_lut",
+    name="codequant2_lut",
     cpp_sources=_CPP_DECLARATIONS,
     cuda_sources=_CUDA_SOURCE,
     functions=["row_lut"],
