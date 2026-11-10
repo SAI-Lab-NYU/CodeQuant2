@@ -4,6 +4,10 @@
   Conference on Neural Information Processing Systems (NeurIPS), 2026
 </p>
 
+<p align="center">
+  <a href="https://arxiv.org/abs/2611.09868"><img src="https://img.shields.io/badge/arXiv-2611.09868-b31b1b.svg" alt="arXiv:2611.09868"></a>
+</p>
+
 This repository provides the official implementation of **CodeQuant2**, a
 clustering-based quantization framework for **large reasoning models (LRMs)**.
 CodeQuant2 combines reasoning-aware calibration, fine-tuned rotation and scaling,
